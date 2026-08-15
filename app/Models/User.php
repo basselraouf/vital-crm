@@ -7,12 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
-use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 class User extends Authenticatable implements JWTSubject
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory, HasRoles, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -20,7 +20,7 @@ class User extends Authenticatable implements JWTSubject
      * @var array<int, string>
      */
     protected $fillable = [
-        'username', 'type', 'date_of_birth', 'email', 'password'
+        'username', 'email', 'password',
     ];
 
     /**
@@ -53,8 +53,9 @@ class User extends Authenticatable implements JWTSubject
         return [];
     }
 
-    public function validatePassportPassword($value)
+    public function validatePassportPassword($value): bool
     {
         return Hash::check($value, $this->password);
     }
 }
+

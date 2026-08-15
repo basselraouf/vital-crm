@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
-use App\Http\Services\Auth\AuthService;
+use App\Services\Auth\AuthService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
-    public $authService;
+    protected AuthService $authService;
 
     public function __construct(AuthService $authService)
     {
@@ -39,9 +40,8 @@ class AuthController extends Controller
     {
         $oldToken = JWTAuth::getToken();
         if (!$oldToken) {
-            return response()->json(['error' => 'Token not provided'], 401);
+            return Response::errorResponse('Token not provided', [], 401);
         }
         return $this->authService->refreshToken($oldToken);
     }
-
 }

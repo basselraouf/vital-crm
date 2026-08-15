@@ -1,13 +1,14 @@
 <?php
 
-namespace App\Http\Requests\Auth;
+namespace App\Http\Requests\Role;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class RegisterRequest extends FormRequest
+class AssignRoleRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     * Authorization is handled by the 'permission:assign-role' middleware on the route.
      */
     public function authorize(): bool
     {
@@ -22,9 +23,7 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'username' => 'required|string|max:250',
-            'email'    => 'required|email:filter|max:255|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
+            'role' => 'required|string|exists:roles,name',
         ];
     }
 }
