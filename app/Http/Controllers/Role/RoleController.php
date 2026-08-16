@@ -28,6 +28,15 @@ class RoleController extends Controller
     }
 
     /**
+     * List all available permissions.
+     * GET /api/permissions
+     */
+    public function permissions()
+    {
+        return $this->roleService->getPermissions();
+    }
+
+    /**
      * Assign a role to a user.
      * POST /api/users/{user}/roles
      */

@@ -32,7 +32,13 @@ class Handler extends ExceptionHandler
 
         $this->renderable(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, $request) {
             if ($request->is('api/*')) {
-                return \Illuminate\Support\Facades\Response::errorResponse("Route or resource not found.", [], 404);
+                return \Illuminate\Support\Facades\Response::errorResponse("Not found.", [], 404);
+            }
+        });
+
+        $this->renderable(function (\Spatie\Permission\Exceptions\UnauthorizedException $e, $request) {
+            if ($request->is('api/*')) {
+                return \Illuminate\Support\Facades\Response::errorResponse($e->getMessage(), [], 403);
             }
         });
 

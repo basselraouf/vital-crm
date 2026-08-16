@@ -30,6 +30,25 @@ class RoleService
     }
 
     /**
+     * List all available permissions.
+     */
+    public function getPermissions()
+    {
+        try {
+            $permissions = Permission::all()->map(function (Permission $permission) {
+                return [
+                    'id'   => $permission->id,
+                    'name' => $permission->name,
+                ];
+            });
+
+            return Response::successResponse($permissions);
+        } catch (\Exception $e) {
+            return Response::handleException($e, 'fetch permissions');
+        }
+    }
+
+    /**
      * Assign a role to a user.
      */
     public function assignRole(User $user, string $roleName)

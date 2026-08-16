@@ -31,6 +31,8 @@ Route::prefix('website')->name('website.')->group(function () {
 Route::middleware('auth:api')->group(function () {
 
     // ── Roles & Permissions ───────────────────────────────────────────────
+    Route::get('permissions',              [RoleController::class, 'permissions'])->name('permissions.index')->middleware('permission:view-roles');
+
     Route::prefix('roles')->group(function () {
         Route::get('/',                    [RoleController::class, 'index'])->name('roles.index')->middleware('permission:view-roles');
         Route::put('{role}/permissions',   [RoleController::class, 'syncPermissions'])->name('roles.sync-permissions')->middleware('permission:edit-role');
@@ -39,6 +41,8 @@ Route::middleware('auth:api')->group(function () {
     // ── Users ─────────────────────────────────────────────────────────────
     Route::prefix('users')->group(function () {
         Route::post('/',                   [UserController::class, 'store'])->name('users.store')->middleware('permission:create-user');
+        Route::get('/',                    [UserController::class, 'index'])->name('users.index')->middleware('permission:view-users');
+        Route::delete('{user}',            [UserController::class, 'destroy'])->name('users.destroy')->middleware('permission:delete-user');
 
         Route::prefix('{user}')->group(function () {
             Route::post('roles',           [RoleController::class, 'assignRole'])->name('users.assign-role')->middleware('permission:assign-role');
@@ -63,5 +67,4 @@ Route::middleware('auth:api')->group(function () {
         Route::put('{id}',       [BlogCategoryController::class, 'update'])->name('update');
         Route::delete('{id}',    [BlogCategoryController::class, 'destroy'])->name('destroy');
     });
-
 });

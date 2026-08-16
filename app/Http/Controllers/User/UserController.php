@@ -22,4 +22,22 @@ class UserController extends Controller
     {
         return $this->userService->store($request->validated());
     }
+
+    /**
+     * Get all users.
+     * GET /api/users
+     */
+    public function index()
+    {
+        return $this->userService->index();
+    }
+
+    /**
+     * Delete a user.
+     * DELETE /api/users/{user}
+     */
+    public function destroy($id)
+    {
+        return $this->userService->destroy($id);
+    }
 }

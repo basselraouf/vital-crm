@@ -37,4 +37,59 @@ class UserService
             return Response::handleException($e, 'create user');
         }
     }
+
+    /**
+     * Get a paginated list of all users with their roles.
+     */
+    public function index()
+    {
+        try {
+            // Eager load roles
+            $users = User::with('roles')->paginate(15);
+
+            // Format the response. Since we are not using a dedicated Resource class yet,
+            // we will map over the items to format them nicely.
+            $users->getCollection()->transform(function ($user) {
+                return [
+                    'id'       => $user->id,
+                    'username' => $user->username,
+                    'email'    => $user->email,
+                    'roles'    => $user->getRoleNames(),
+                ];
+            });
+
+            return Response::successResponse([
+                'users' => $users->items(),
+                'meta'  => [
+                    'current_page' => $users->currentPage(),
+                    'last_page'    => $users->lastPage(),
+                    'per_page'     => $users->perPage(),
+                    'total'        => $users->total(),
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return Response::handleException($e, 'fetch users');
+        }
+    }
+
+    /**
+     * Delete a user.
+     */
+    public function destroy($id)
+    {
+        try {
+            $user = User::findOrFail($id);
+            $user->delete();
+
+            return Response::successResponse(null, 'User deleted successfully.');
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return Response::handleModelNotFoundException($e, 'User');
+        } catch (\Exception $e) {
+            // This will catch the RuntimeException we threw in the User model if someone tries to delete super_admin
+            if ($e instanceof \RuntimeException) {
+                return Response::errorResponse($e->getMessage(), [], 403);
+            }
+            return Response::handleException($e, 'delete user');
+        }
+    }
 }
