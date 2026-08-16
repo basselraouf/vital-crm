@@ -78,6 +78,10 @@ class UserService
     public function destroy($id)
     {
         try {
+            if (\Illuminate\Support\Facades\Auth::id() == $id) {
+                return Response::errorResponse("You cannot delete your own account.", [], 403);
+            }
+
             $user = User::findOrFail($id);
             $user->delete();
 
