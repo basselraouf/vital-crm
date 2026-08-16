@@ -25,6 +25,8 @@ Route::prefix('public')->name('public.')->group(function () {
     Route::get('blogs',              [BlogController::class, 'publicIndex'])->name('blogs.index');
     Route::get('blogs/slug/{slug}',  [BlogController::class, 'getBySlug'])->name('blogs.slug');
     Route::get('blog-categories',    [BlogCategoryController::class, 'index'])->name('blog-categories.index');
+
+    Route::post('free-consultations', [\App\Http\Controllers\Consultation\FreeConsultationController::class, 'store'])->name('free-consultations.store');
 });
 
 // ── Dashboard (auth required) ─────────────────────────────────────────────
@@ -64,7 +66,15 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/',          [BlogCategoryController::class, 'index'])->name('index')->middleware('permission:manage-blog-categories');
         Route::get('{id}',       [BlogCategoryController::class, 'show'])->name('show')->middleware('permission:manage-blog-categories');
         Route::post('/',         [BlogCategoryController::class, 'store'])->name('store')->middleware('permission:manage-blog-categories');
-        Route::put('{id}',       [BlogCategoryController::class, 'update'])->name('update')->middleware('permission:manage-blog-categories');
+        Route::post('{id}',       [BlogCategoryController::class, 'update'])->name('update')->middleware('permission:manage-blog-categories');
         Route::delete('{id}',    [BlogCategoryController::class, 'destroy'])->name('destroy')->middleware('permission:manage-blog-categories');
+    });
+
+    // ── Free Consultations (Dashboard) ────────────────────────────────────
+    Route::prefix('free-consultations')->name('free-consultations.dashboard.')->group(function () {
+        Route::get('/',                 [\App\Http\Controllers\Consultation\FreeConsultationController::class, 'index'])->name('index')->middleware('permission:view-consultations');
+        Route::get('{id}',              [\App\Http\Controllers\Consultation\FreeConsultationController::class, 'show'])->name('show')->middleware('permission:view-consultations');
+        Route::patch('{id}/status',     [\App\Http\Controllers\Consultation\FreeConsultationController::class, 'updateStatus'])->name('update-status')->middleware('permission:edit-consultation');
+        Route::delete('{id}',           [\App\Http\Controllers\Consultation\FreeConsultationController::class, 'destroy'])->name('destroy')->middleware('permission:delete-consultation');
     });
 });
