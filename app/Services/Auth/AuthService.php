@@ -10,31 +10,6 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthService
 {
-    public function register($request)
-    {
-        try {
-            $user = User::create([
-                'username' => $request->username,
-                'email'    => $request->email,
-                'password' => $request->password, // hashed by model cast
-            ]);
-
-            // Assign default role
-            $user->assignRole('agent');
-
-            $token = JWTAuth::fromUser($user);
-
-            $responseData          = (new AuthResource($user))->resolve();
-            $responseData['token'] = $token;
-
-            return Response::successResponse($responseData, null, 201);
-        } catch (\Illuminate\Database\QueryException $e) {
-            return Response::handleDatabaseException($e, 'register user');
-        } catch (\Exception $e) {
-            return Response::handleException($e, 'register user');
-        }
-    }
-
     public function login($request)
     {
         $user = User::where('email', $request->email)->first();

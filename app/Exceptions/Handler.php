@@ -23,6 +23,19 @@ class Handler extends ExceptionHandler
      */
     public function register(): void
     {
+        $this->renderable(function (\Illuminate\Database\Eloquent\ModelNotFoundException $e, $request) {
+            if ($request->is('api/*')) {
+                $model = class_basename($e->getModel());
+                return \Illuminate\Support\Facades\Response::errorResponse("{$model} not found.", [], 404);
+            }
+        });
+
+        $this->renderable(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, $request) {
+            if ($request->is('api/*')) {
+                return \Illuminate\Support\Facades\Response::errorResponse("Route or resource not found.", [], 404);
+            }
+        });
+
         $this->reportable(function (Throwable $e) {
             //
         });

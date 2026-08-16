@@ -24,7 +24,7 @@ class SyncPermissionsRequest extends FormRequest
     {
         return [
             'permissions'   => 'required|array|min:1',
-            'permissions.*' => 'required|string|exists:permissions,name',
+            'permissions.*' => 'required|integer|exists:permissions,id',
         ];
     }
 }

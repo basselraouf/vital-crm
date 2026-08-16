@@ -88,6 +88,13 @@ class RoleAndPermissionSeeder extends Seeder
             'create-role',
             'edit-role',
             'delete-role',
+
+            // Blog Management
+            'view-blogs',
+            'create-blog',
+            'edit-blog',
+            'delete-blog',
+            'manage-blog-categories',
         ];
 
         // Create all permissions
@@ -98,6 +105,11 @@ class RoleAndPermissionSeeder extends Seeder
         // -----------------------------------------------
         // Create roles and assign permissions
         // -----------------------------------------------
+
+        // SUPER ADMIN — identical to owner but named separately for the CRM
+        // Always syncs ALL permissions (including any newly added ones)
+        $superAdmin = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'api']);
+        $superAdmin->syncPermissions(Permission::all());
 
         // OWNER — full unrestricted access
         $owner = Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'api']);
@@ -148,11 +160,12 @@ class RoleAndPermissionSeeder extends Seeder
         $this->command->table(
             ['Role', 'Permission Count'],
             [
-                ['owner',  $owner->permissions()->count()],
-                ['admin',  $admin->permissions()->count()],
-                ['agent',  $agent->permissions()->count()],
-                ['doctor', $doctor->permissions()->count()],
-                ['viewer', $viewer->permissions()->count()],
+                ['super_admin', $superAdmin->permissions()->count()],
+                ['owner',       $owner->permissions()->count()],
+                ['admin',       $admin->permissions()->count()],
+                ['agent',       $agent->permissions()->count()],
+                ['doctor',      $doctor->permissions()->count()],
+                ['viewer',      $viewer->permissions()->count()],
             ]
         );
     }

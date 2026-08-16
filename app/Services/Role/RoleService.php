@@ -57,6 +57,10 @@ class RoleService
     public function revokeRole(User $user, string $roleName)
     {
         try {
+            if ($user->isSuperAdmin() && $roleName === 'super_admin') {
+                return Response::errorResponse("Cannot revoke the super_admin role from the Super Admin account.", [], 403);
+            }
+
             if (!$user->hasRole($roleName)) {
                 return Response::errorResponse("User does not have role '{$roleName}'.", [], 422);
             }
@@ -79,16 +83,8 @@ class RoleService
     public function syncPermissions(Role $role, array $permissions)
     {
         try {
-            // Validate all permissions exist
-            $existingPermissions = Permission::whereIn('name', $permissions)->pluck('name')->toArray();
-            $invalid = array_diff($permissions, $existingPermissions);
-
-            if (!empty($invalid)) {
-                return Response::errorResponse(
-                    'Some permissions do not exist: ' . implode(', ', $invalid),
-                    ['invalid_permissions' => $invalid],
-                    422
-                );
+            if ($role->name === 'super_admin') {
+                return Response::errorResponse("The super_admin role permissions cannot be modified.", [], 403);
             }
 
             $role->syncPermissions($permissions);

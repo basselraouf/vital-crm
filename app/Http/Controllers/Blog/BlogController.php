@@ -4,38 +4,55 @@ namespace App\Http\Controllers\Blog;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Blog\BlogRequest;
-use App\Http\Services\Blog\BlogService;
+use App\Services\Blog\BlogService;
 
 class BlogController extends Controller
 {
-    public $blogService;
-    public function __construct(BlogService $blogService)
-    {
-        $this->blogService = $blogService;
-    }
+    public function __construct(private BlogService $blogService) {}
 
+    // ── Dashboard (auth protected) ────────────────────────────────────────
+
+    /** GET /api/blogs  — all statuses, full filters */
     public function index(BlogRequest $request)
     {
         return $this->blogService->getAllBlogs($request);
     }
 
-    public function show(BlogRequest $request)
+    /** GET /api/blogs/{id} */
+    public function show(BlogRequest $request, int $id)
     {
-        return $this->blogService->getBlogById($request->id);
+        return $this->blogService->getBlogById($id);
     }
 
+    /** POST /api/blogs */
     public function store(BlogRequest $request)
     {
         return $this->blogService->createBlog($request);
     }
 
-    public function update(BlogRequest $request)
+    /** POST /api/blogs/{id}  (POST used to support multipart/form-data for image) */
+    public function update(BlogRequest $request, int $id)
     {
-        return $this->blogService->updateBlog($request);
+        return $this->blogService->updateBlog($request, $id);
     }
 
-    public function destroy(BlogRequest $request)
+    /** DELETE /api/blogs/{id} */
+    public function destroy(BlogRequest $request, int $id)
     {
-        return $this->blogService->deleteBlog($request->id);
+        return $this->blogService->deleteBlog($id);
+    }
+
+    // ── Public / Website (no auth) ────────────────────────────────────────
+
+    /** GET /api/website/blogs  — published only */
+    public function publicIndex(BlogRequest $request)
+    {
+        return $this->blogService->getPublishedBlogs($request);
+    }
+
+    /** GET /api/website/blogs/slug/{slug} */
+    public function getBySlug(string $slug)
+    {
+        return $this->blogService->getBlogBySlug($slug);
     }
 }

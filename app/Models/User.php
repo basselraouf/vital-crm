@@ -57,5 +57,27 @@ class User extends Authenticatable implements JWTSubject
     {
         return Hash::check($value, $this->password);
     }
+
+    // ── Super Admin Protection ─────────────────────────────────────────────
+
+    /** Is this the immutable super_admin account? */
+    public function isSuperAdmin(): bool
+    {
+        return $this->email === 'superadmin@vital-crm.com';
+    }
+
+    /**
+     * Prevent deletion of the super_admin user.
+     * Called automatically by Eloquent before any delete.
+     */
+    protected static function booted(): void
+    {
+        static::deleting(function (User $user) {
+            if ($user->isSuperAdmin()) {
+                throw new \RuntimeException('The Super Admin account cannot be deleted.');
+            }
+        });
+    }
+
 }
 
