@@ -83,6 +83,11 @@ class UserService
             }
 
             $user = User::findOrFail($id);
+
+            if ($user->hasRole('super_admin')) {
+                return Response::errorResponse("The Super Admin account cannot be deleted.", [], 403);
+            }
+
             $user->delete();
 
             return Response::successResponse(null, 'User deleted successfully.');
