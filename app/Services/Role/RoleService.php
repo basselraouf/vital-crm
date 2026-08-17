@@ -97,6 +97,50 @@ class RoleService
     }
 
     /**
+     * Create a new custom role.
+     */
+    public function createRole(string $name)
+    {
+        try {
+            $name = strtolower(trim($name));
+
+            if (Role::where('name', $name)->exists()) {
+                return Response::errorResponse("Role '{$name}' already exists.", [], 422);
+            }
+
+            $role = Role::create(['name' => $name, 'guard_name' => 'api']);
+
+            return Response::successResponse([
+                'id'          => $role->id,
+                'name'        => $role->name,
+                'permissions' => [],
+            ], "Role '{$name}' created successfully.", 201);
+        } catch (\Exception $e) {
+            return Response::handleException($e, 'create role');
+        }
+    }
+
+    /**
+     * Delete a custom role (cannot delete system roles).
+     */
+    public function deleteRole(Role $role)
+    {
+        try {
+            $protected = ['super_admin', 'admin', 'agent'];
+
+            if (in_array($role->name, $protected)) {
+                return Response::errorResponse("The '{$role->name}' role is a system role and cannot be deleted.", [], 403);
+            }
+
+            $role->delete();
+
+            return Response::successResponse(null, "Role '{$role->name}' deleted successfully.");
+        } catch (\Exception $e) {
+            return Response::handleException($e, 'delete role');
+        }
+    }
+
+    /**
      * Sync permissions on a specific role (replaces all existing permissions).
      */
     public function syncPermissions(Role $role, array $permissions)

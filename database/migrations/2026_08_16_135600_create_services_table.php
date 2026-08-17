@@ -11,13 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('free_consultations', function (Blueprint $table) {
+        Schema::create('services', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('email');
-            $table->text('description');
-            $table->foreignId('service_id')->nullable()->constrained('services')->nullOnDelete();
-            $table->string('status')->default('pending'); // pending, contacted, resolved
+            $table->string('slug')->unique();
+            $table->text('description')->nullable();
+            $table->string('image')->nullable();         // external WordPress URL or local upload
+            $table->unsignedTinyInteger('sort_order')->default(0);
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }
@@ -27,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('free_consultations');
+        Schema::dropIfExists('services');
     }
 };

@@ -13,6 +13,12 @@ class FreeConsultation extends Model
         'name',
         'email',
         'description',
+        'service_id',
         'status',
     ];
+
+    public function service()
+    {
+        return $this->belongsTo(\App\Models\Service::class, 'service_id');
+    }
 }

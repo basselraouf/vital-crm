@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Role;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Role\AssignRoleRequest;
+use App\Http\Requests\Role\CreateRoleRequest;
 use App\Http\Requests\Role\SyncPermissionsRequest;
 use App\Models\User;
 use App\Services\Role\RoleService;
@@ -25,6 +26,24 @@ class RoleController extends Controller
     public function index()
     {
         return $this->roleService->index();
+    }
+
+    /**
+     * Create a new custom role.
+     * POST /api/roles
+     */
+    public function store(CreateRoleRequest $request)
+    {
+        return $this->roleService->createRole($request->name);
+    }
+
+    /**
+     * Delete a custom role.
+     * DELETE /api/roles/{role}
+     */
+    public function destroy(Role $role)
+    {
+        return $this->roleService->deleteRole($role);
     }
 
     /**
