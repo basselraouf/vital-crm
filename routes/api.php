@@ -3,10 +3,11 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Blog\BlogCategoryController;
 use App\Http\Controllers\Blog\BlogController;
+use App\Http\Controllers\Consultation\FreeConsultationController;
 use App\Http\Controllers\Role\RoleController;
+use App\Http\Controllers\Service\ServiceController;
 use App\Http\Controllers\User\UserController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Consultation\FreeConsultationController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -26,7 +27,10 @@ Route::prefix('public')->name('public.')->group(function () {
     Route::get('blogs/slug/{slug}',  [BlogController::class, 'getBySlug'])->name('blogs.slug');
     Route::get('blog-categories',    [BlogCategoryController::class, 'index'])->name('blog-categories.index');
 
-    Route::post('free-consultations', [\App\Http\Controllers\Consultation\FreeConsultationController::class, 'store'])->name('free-consultations.store');
+    Route::post('free-consultations', [FreeConsultationController::class, 'store'])->name('free-consultations.store');
+
+    Route::get('services',           [ServiceController::class, 'publicIndex'])->name('services.index');
+    Route::get('services/{slug}',    [ServiceController::class, 'showBySlug'])->name('services.show');
 });
 
 // ── Dashboard (auth required) ─────────────────────────────────────────────
@@ -78,5 +82,15 @@ Route::middleware('auth:api')->group(function () {
         Route::get('{id}',              [FreeConsultationController::class, 'show'])->name('show')->middleware('permission:view-consultations');
         Route::patch('{id}/status',     [FreeConsultationController::class, 'updateStatus'])->name('update-status')->middleware('permission:edit-consultation');
         Route::delete('{id}',           [FreeConsultationController::class, 'destroy'])->name('destroy')->middleware('permission:delete-consultation');
+    });
+
+    // ── Services (Dashboard) ────────────────────────────────────────────
+    Route::prefix('services')->name('services.dashboard.')->group(function () {
+        Route::get('/',     [ServiceController::class, 'index'])->name('index')->middleware('permission:view-services');
+        Route::get('{id}',  [ServiceController::class, 'show'])->name('show')->middleware('permission:view-services');
+        Route::post('/',    [ServiceController::class, 'store'])->name('store')->middleware('permission:create-service');
+        Route::post('{id}', [ServiceController::class, 'update'])->name('update')->middleware('permission:edit-service');
+        Route::delete('{id}',[ServiceController::class, 'destroy'])->name('destroy')->middleware('permission:delete-service');
+        Route::post('{id}/packages', [ServiceController::class, 'syncPackages'])->name('packages')->middleware('permission:edit-service');
     });
 });
