@@ -95,6 +95,12 @@ class RoleAndPermissionSeeder extends Seeder
             'edit-blog',
             'delete-blog',
             'manage-blog-categories',
+
+            // Accommodations
+            'view-accommodations',
+            'create-accommodation',
+            'edit-accommodation',
+            'delete-accommodation',
         ];
 
         // Create all permissions
@@ -132,6 +138,7 @@ class RoleAndPermissionSeeder extends Seeder
             'view-communications', 'send-message',
             'view-quotes', 'create-quote', 'edit-quote', 'send-quote',
             'view-services', 'view-doctors',
+            'view-accommodations',
         ]);
 
         // DOCTOR — view their consultations and assigned patients only
@@ -154,6 +161,7 @@ class RoleAndPermissionSeeder extends Seeder
             'view-services',
             'view-doctors',
             'view-users',
+            'view-accommodations',
         ]);
 
         $this->command->info('✅ Roles and permissions seeded successfully.');

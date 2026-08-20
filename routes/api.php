@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Blog\BlogCategoryController;
 use App\Http\Controllers\Blog\BlogController;
 use App\Http\Controllers\Consultation\FreeConsultationController;
+use App\Http\Controllers\Accommodation\AccommodationController;
 use App\Http\Controllers\Role\RoleController;
 use App\Http\Controllers\Service\ServiceController;
 use App\Http\Controllers\Service\ServiceReviewController;
@@ -33,6 +34,9 @@ Route::prefix('public')->name('public.')->group(function () {
     Route::get('services',           [ServiceController::class, 'publicIndex'])->name('services.index');
     Route::get('services/{slug}',    [ServiceController::class, 'showBySlug'])->name('services.show');
     Route::post('services/{slug}/reviews', [ServiceReviewController::class, 'publicStore'])->name('services.reviews.store');
+
+    Route::get('accommodations',           [AccommodationController::class, 'publicIndex'])->name('accommodations.index');
+    Route::get('accommodations/{slug}',    [AccommodationController::class, 'publicShow'])->name('accommodations.show');
 });
 
 // ── Dashboard (auth required) ─────────────────────────────────────────────
@@ -102,5 +106,14 @@ Route::middleware('auth:api')->group(function () {
         Route::post('{id}/reviews',                                 [ServiceReviewController::class, 'store'])->name('reviews.store')->middleware('permission:edit-service');
         Route::patch('{id}/reviews/{reviewId}/status',             [ServiceReviewController::class, 'updateStatus'])->name('reviews.status')->middleware('permission:edit-service');
         Route::delete('{id}/reviews/{reviewId}',                   [ServiceReviewController::class, 'destroy'])->name('reviews.destroy')->middleware('permission:edit-service');
+    });
+
+    // ── Accommodations (Dashboard) ────────────────────────────────────
+    Route::prefix('accommodations')->name('accommodations.dashboard.')->group(function () {
+        Route::get('/',          [AccommodationController::class, 'index'])->name('index')->middleware('permission:view-accommodations');
+        Route::get('{id}',       [AccommodationController::class, 'show'])->name('show')->middleware('permission:view-accommodations');
+        Route::post('/',         [AccommodationController::class, 'store'])->name('store')->middleware('permission:create-accommodation');
+        Route::post('{id}',      [AccommodationController::class, 'update'])->name('update')->middleware('permission:edit-accommodation');
+        Route::delete('{id}',    [AccommodationController::class, 'destroy'])->name('destroy')->middleware('permission:delete-accommodation');
     });
 });
