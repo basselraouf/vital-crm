@@ -3,7 +3,6 @@
 namespace App\Services\Consultation;
 
 use App\Models\FreeConsultation;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 
 class FreeConsultationService
@@ -11,17 +10,25 @@ class FreeConsultationService
     /**
      * Get a paginated list of consultations (Dashboard).
      */
-    public function index(Request $request)
+    public function index(array $filters)
     {
         try {
-            $query = FreeConsultation::query()->latest();
+            $query = FreeConsultation::with('service:id,name,slug,image')
+                ->sorted($filters['sort_by'] ?? 'created_at', $filters['sort_dir'] ?? 'desc');
 
-            // Optional status filter
-            if ($request->filled('status')) {
-                $query->where('status', $request->status);
+            if (!empty($filters['search'])) {
+                $query->search($filters['search']);
             }
 
-            $consultations = $query->paginate($request->per_page ?? 15);
+            if (!empty($filters['status'])) {
+                $query->where('status', $filters['status']);
+            }
+
+            if (!empty($filters['service_id'])) {
+                $query->where('service_id', $filters['service_id']);
+            }
+
+            $consultations = $query->paginate($filters['per_page'] ?? 15);
 
             return Response::successResponse([
                 'consultations' => $consultations->items(),
@@ -43,7 +50,7 @@ class FreeConsultationService
     public function show(int $id)
     {
         try {
-            $consultation = FreeConsultation::findOrFail($id);
+            $consultation = FreeConsultation::with('service:id,name,slug,image')->findOrFail($id);
             return Response::successResponse($consultation);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return Response::handleModelNotFoundException($e, 'Free Consultation');
@@ -59,6 +66,7 @@ class FreeConsultationService
     {
         try {
             $consultation = FreeConsultation::create($data);
+            $consultation->load('service:id,name,slug,image');
 
             return Response::successResponse(
                 $consultation,
@@ -76,7 +84,7 @@ class FreeConsultationService
     public function updateStatus(int $id, string $status)
     {
         try {
-            $consultation = FreeConsultation::findOrFail($id);
+            $consultation = FreeConsultation::with('service:id,name,slug,image')->findOrFail($id);
             $consultation->update(['status' => $status]);
 
             return Response::successResponse($consultation, 'Status updated successfully.');

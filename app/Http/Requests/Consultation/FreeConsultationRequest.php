@@ -21,6 +21,17 @@ class FreeConsultationRequest extends FormRequest
      */
     public function rules(): array
     {
+        if ($this->routeIs('*.index')) {
+            return [
+                'search'     => ['nullable', 'string', 'max:255'],
+                'status'     => ['nullable', 'string', 'in:new,contacted,scheduled,completed,cancelled,no_show,unqualified'],
+                'service_id' => ['nullable', 'integer', 'exists:services,id'],
+                'sort_by'    => ['nullable', 'in:full_name,created_at,preferred_date,status'],
+                'sort_dir'   => ['nullable', 'in:asc,desc'],
+                'per_page'   => ['nullable', 'integer', 'min:1', 'max:100'],
+            ];
+        }
+
         if ($this->isMethod('patch') || $this->isMethod('put')) {
             // Update Status (Dashboard)
             return [
@@ -33,7 +44,7 @@ class FreeConsultationRequest extends FormRequest
             'full_name'          => ['required', 'string', 'max:255'],
             'email'              => ['nullable', 'email', 'max:255'],
             'phone'              => ['required', 'string', 'max:50'],
-            'preferred_date'     => ['nullable', 'date'],
+            'preferred_date'     => ['nullable', 'date', 'after_or_equal:today'],
             'service_id'         => ['nullable', 'exists:services,id'],
             
             // Medical Fields

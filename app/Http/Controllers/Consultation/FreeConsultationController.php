@@ -16,9 +16,9 @@ class FreeConsultationController extends Controller
         $this->service = $service;
     }
 
-    public function index(Request $request)
+    public function index(FreeConsultationRequest $request)
     {
-        return $this->service->index($request);
+        return $this->service->index($request->validated());
     }
 
     public function store(FreeConsultationRequest $request)
