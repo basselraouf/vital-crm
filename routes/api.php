@@ -6,6 +6,7 @@ use App\Http\Controllers\Blog\BlogController;
 use App\Http\Controllers\Consultation\FreeConsultationController;
 use App\Http\Controllers\Role\RoleController;
 use App\Http\Controllers\Service\ServiceController;
+use App\Http\Controllers\Service\ServiceReviewController;
 use App\Http\Controllers\User\UserController;
 use Illuminate\Support\Facades\Route;
 /*
@@ -31,6 +32,7 @@ Route::prefix('public')->name('public.')->group(function () {
 
     Route::get('services',           [ServiceController::class, 'publicIndex'])->name('services.index');
     Route::get('services/{slug}',    [ServiceController::class, 'showBySlug'])->name('services.show');
+    Route::post('services/{slug}/reviews', [ServiceReviewController::class, 'publicStore'])->name('services.reviews.store');
 });
 
 // ── Dashboard (auth required) ─────────────────────────────────────────────
@@ -91,6 +93,14 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/',    [ServiceController::class, 'store'])->name('store')->middleware('permission:create-service');
         Route::post('{id}', [ServiceController::class, 'update'])->name('update')->middleware('permission:edit-service');
         Route::delete('{id}',[ServiceController::class, 'destroy'])->name('destroy')->middleware('permission:delete-service');
-        Route::post('{id}/packages', [ServiceController::class, 'syncPackages'])->name('packages')->middleware('permission:edit-service');
+        Route::post('{id}/packages',    [ServiceController::class, 'syncPackages'])->name('packages')->middleware('permission:edit-service');
+        Route::post('{id}/price-items', [ServiceController::class, 'syncPriceItems'])->name('price-items')->middleware('permission:edit-service');
+        Route::post('{id}/faqs',        [ServiceController::class, 'syncFaqs'])->name('faqs')->middleware('permission:edit-service');
+
+        // Reviews
+        Route::get('{id}/reviews',                                  [ServiceReviewController::class, 'index'])->name('reviews.index')->middleware('permission:view-services');
+        Route::post('{id}/reviews',                                 [ServiceReviewController::class, 'store'])->name('reviews.store')->middleware('permission:edit-service');
+        Route::patch('{id}/reviews/{reviewId}/status',             [ServiceReviewController::class, 'updateStatus'])->name('reviews.status')->middleware('permission:edit-service');
+        Route::delete('{id}/reviews/{reviewId}',                   [ServiceReviewController::class, 'destroy'])->name('reviews.destroy')->middleware('permission:edit-service');
     });
 });

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->json('benefits')->nullable();               // service-level benefits list (right-side box)
             $table->json('why_us_points')->nullable();          // "Why Choose Vital Global Care?" bullets
             $table->unsignedTinyInteger('sort_order')->default(0);
-            $table->boolean('is_active')->default(true);
+            $table->enum('status', ['active', 'in_active', 'coming_soon'])->default('active');
             $table->timestamps();
         });
     }

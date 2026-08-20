@@ -19,23 +19,28 @@ class Service extends Model
         'image',
         'benefits',
         'why_us_points',
+        'packages_tagline',
+        'packages_description',
+        'packages_include',
         'sort_order',
-        'is_active',
+        'status',
     ];
 
     protected $casts = [
-        'benefits'      => 'array',
-        'why_us_points' => 'array',
-        'is_active'     => 'boolean',
-        'sort_order'    => 'integer',
+        'benefits'          => 'array',
+        'why_us_points'     => 'array',
+        'packages_include'  => 'array',
+        'sort_order'        => 'integer',
     ];
 
     protected $appends = [
         'image_url',
+        'procedures',
     ];
 
     protected $hidden = [
         'image',
+        'proceduresRelation',
     ];
 
     // ── Accessor ──────────────────────────────────────────────────────────────
@@ -47,9 +52,14 @@ class Service extends Model
         return asset(Storage::url($this->image));
     }
 
+    public function getProceduresAttribute(): array
+    {
+        return $this->proceduresRelation->pluck('name')->toArray();
+    }
+
     // ── Relations ─────────────────────────────────────────────────────────────
 
-    public function procedures()
+    public function proceduresRelation()
     {
         return $this->hasMany(ServiceProcedure::class)->orderBy('sort_order');
     }
@@ -57,6 +67,21 @@ class Service extends Model
     public function packages()
     {
         return $this->hasMany(ServicePackage::class)->orderBy('sort_order');
+    }
+
+    public function priceItems()
+    {
+        return $this->hasMany(ServicePriceItem::class)->orderBy('sort_order');
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(ServiceReview::class)->latest();
+    }
+
+    public function faqs()
+    {
+        return $this->hasMany(ServiceFaq::class)->orderBy('sort_order');
     }
 
     public function consultations()
@@ -68,7 +93,7 @@ class Service extends Model
 
     public function scopeActive(Builder $query): Builder
     {
-        return $query->where('is_active', true);
+        return $query->whereIn('status', ['active', 'coming_soon']);
     }
 
     public function scopeSearch(Builder $query, string $term): Builder

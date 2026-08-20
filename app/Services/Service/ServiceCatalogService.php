@@ -15,14 +15,14 @@ class ServiceCatalogService
     public function index(Request $request)
     {
         try {
-            $query = Service::with(['procedures', 'packages']);
+            $query = Service::query();
 
             if ($request->filled('search')) {
                 $query->search($request->search);
             }
 
-            if ($request->filled('is_active')) {
-                $query->where('is_active', filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN));
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
             }
 
             $query->sorted(
@@ -52,7 +52,8 @@ class ServiceCatalogService
     public function publicIndex(Request $request)
     {
         try {
-            $query = Service::with(['procedures'])
+            $query = Service::with(['proceduresRelation'])
+                ->select('id', 'name', 'slug', 'tagline', 'image', 'status')
                 ->active()
                 ->sorted($request->sort_by ?? 'sort_order', $request->sort_dir ?? 'asc');
 
@@ -73,7 +74,7 @@ class ServiceCatalogService
     public function show(int $id)
     {
         try {
-            $service = Service::with(['procedures', 'packages'])->findOrFail($id);
+            $service = Service::with(['proceduresRelation', 'packages', 'priceItems', 'faqs'])->findOrFail($id);
             return Response::successResponse($service);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return Response::handleModelNotFoundException($e, 'Service');
@@ -87,12 +88,21 @@ class ServiceCatalogService
     public function showBySlug(string $slug)
     {
         try {
-            $service = Service::with(['procedures', 'packages'])
+            $service = Service::with(['proceduresRelation', 'packages', 'priceItems', 'faqs'])
                 ->active()
                 ->where('slug', $slug)
                 ->firstOrFail();
 
-            return Response::successResponse($service);
+            // Split selected reviews by source
+            $selectedReviews = $service->reviews()->selected()->get();
+
+            $data = $service->toArray();
+            $data['reviews'] = [
+                'website'         => $selectedReviews->where('source', 'website')->values(),
+                'another_reviews' => $selectedReviews->where('source', 'admin')->values(),
+            ];
+
+            return Response::successResponse($data);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return Response::handleModelNotFoundException($e, 'Service');
         } catch (\Exception $e) {
@@ -114,7 +124,7 @@ class ServiceCatalogService
             }
 
             return Response::successResponse(
-                $service->fresh(['procedures', 'packages']),
+                $service->fresh(['proceduresRelation', 'packages']),
                 'Service created successfully.',
                 201
             );
@@ -135,14 +145,14 @@ class ServiceCatalogService
 
             // Sync nested relations only if keys are present in the request
             if ($request->has('procedures')) {
-                $service->procedures()->delete();
+                $service->proceduresRelation()->delete();
                 if (!empty($request->procedures)) {
                     $this->insertProcedures($service, $request->procedures);
                 }
             }
 
             return Response::successResponse(
-                $service->fresh(['procedures', 'packages']),
+                $service->fresh(['proceduresRelation', 'packages']),
                 'Service updated successfully.'
             );
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
@@ -180,20 +190,68 @@ class ServiceCatalogService
     {
         try {
             $service = Service::findOrFail($id);
-
-            // Delete all existing and re-insert
             $service->packages()->delete();
-
             $this->insertPackages($service, $packages);
-
-            return Response::successResponse(
-                $service->fresh('packages'),
-                'Packages synced successfully.'
-            );
+            return Response::successResponse($service->fresh('packages'), 'Packages synced successfully.');
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return Response::handleModelNotFoundException($e, 'Service');
         } catch (\Exception $e) {
             return Response::handleException($e, 'sync packages');
+        }
+    }
+
+    // ── Sync Price Items ──────────────────────────────────────────────────────
+
+    public function syncPriceItems(int $id, array $items)
+    {
+        try {
+            $service = Service::findOrFail($id);
+            $service->priceItems()->delete();
+
+            $rows = array_map(fn($item, $i) => [
+                'service_id'  => $service->id,
+                'name'        => $item['name'],
+                'price'       => $item['price'] ?? null,
+                'note'        => $item['note'] ?? null,
+                'sort_order'  => $item['sort_order'] ?? $i,
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ], $items, array_keys($items));
+
+            \App\Models\ServicePriceItem::insert($rows);
+
+            return Response::successResponse($service->fresh('priceItems'), 'Price items synced successfully.');
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return Response::handleModelNotFoundException($e, 'Service');
+        } catch (\Exception $e) {
+            return Response::handleException($e, 'sync price items');
+        }
+    }
+
+    // ── Sync FAQs ─────────────────────────────────────────────────────────────
+
+    public function syncFaqs(int $id, array $faqs)
+    {
+        try {
+            $service = Service::findOrFail($id);
+            $service->faqs()->delete();
+
+            $rows = array_map(fn($faq, $i) => [
+                'service_id'  => $service->id,
+                'question'    => $faq['question'],
+                'answer'      => $faq['answer'] ?? null,
+                'sort_order'  => $faq['sort_order'] ?? $i,
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ], $faqs, array_keys($faqs));
+
+            \App\Models\ServiceFaq::insert($rows);
+
+            return Response::successResponse($service->fresh('faqs'), 'FAQs synced successfully.');
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return Response::handleModelNotFoundException($e, 'Service');
+        } catch (\Exception $e) {
+            return Response::handleException($e, 'sync faqs');
         }
     }
 
@@ -203,7 +261,9 @@ class ServiceCatalogService
     {
         $data = $request->only([
             'name', 'slug', 'tagline', 'short_description',
-            'benefits', 'why_us_points', 'sort_order', 'is_active',
+            'benefits', 'why_us_points',
+            'packages_tagline', 'packages_description', 'packages_include',
+            'sort_order', 'status',
         ]);
 
         // Handle image upload

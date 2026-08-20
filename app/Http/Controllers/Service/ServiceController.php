@@ -49,6 +49,18 @@ class ServiceController extends Controller
         return $this->service->syncPackages($id, $request->validated('packages'));
     }
 
+    /** POST /api/services/{id}/price-items — sync price items */
+    public function syncPriceItems(ServiceRequest $request, int $id)
+    {
+        return $this->service->syncPriceItems($id, $request->validated('price_items'));
+    }
+
+    /** POST /api/services/{id}/faqs — sync FAQs */
+    public function syncFaqs(ServiceRequest $request, int $id)
+    {
+        return $this->service->syncFaqs($id, $request->validated('faqs'));
+    }
+
     // ── Public ────────────────────────────────────────────────────────────────
 
     /** GET /api/public/services */

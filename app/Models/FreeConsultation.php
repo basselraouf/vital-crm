@@ -10,11 +10,21 @@ class FreeConsultation extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name',
-        'email',
-        'description',
         'service_id',
+        'full_name',
+        'email',
+        'phone',
+        'preferred_date',
+        'age',
+        'weight',
+        'previous_surgeries',
+        'how_did_you_hear',
+        'additional_notes',
         'status',
+    ];
+
+    protected $casts = [
+        'preferred_date' => 'date',
     ];
 
     public function service()

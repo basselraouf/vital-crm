@@ -24,15 +24,26 @@ class FreeConsultationRequest extends FormRequest
         if ($this->isMethod('patch') || $this->isMethod('put')) {
             // Update Status (Dashboard)
             return [
-                'status' => ['required', 'string', 'in:pending,contacted,resolved'],
+                'status' => ['required', 'string', 'in:new,contacted,scheduled,completed,cancelled,no_show,unqualified'],
             ];
         }
 
         // Store (Public)
         return [
-            'name'        => ['required', 'string', 'max:255'],
-            'email'       => ['required', 'email', 'max:255'],
-            'description' => ['required', 'string', 'max:1000'],
+            'full_name'          => ['required', 'string', 'max:255'],
+            'email'              => ['nullable', 'email', 'max:255'],
+            'phone'              => ['required', 'string', 'max:50'],
+            'preferred_date'     => ['nullable', 'date'],
+            'service_id'         => ['nullable', 'exists:services,id'],
+            
+            // Medical Fields
+            'age'                => ['nullable', 'integer', 'min:1', 'max:120'],
+            'weight'             => ['nullable', 'string', 'max:50'],
+            'previous_surgeries' => ['nullable', 'string', 'max:1000'],
+            
+            // Extra
+            'how_did_you_hear'   => ['nullable', 'string', 'max:255'],
+            'additional_notes'   => ['nullable', 'string', 'max:2000'],
         ];
     }
 }
