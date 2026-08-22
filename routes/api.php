@@ -5,6 +5,7 @@ use App\Http\Controllers\Blog\BlogCategoryController;
 use App\Http\Controllers\Blog\BlogController;
 use App\Http\Controllers\Consultation\FreeConsultationController;
 use App\Http\Controllers\Accommodation\AccommodationController;
+use App\Http\Controllers\Journey\JourneyController;
 use App\Http\Controllers\Role\RoleController;
 use App\Http\Controllers\Service\ServiceController;
 use App\Http\Controllers\Service\ServiceReviewController;
@@ -37,6 +38,8 @@ Route::prefix('public')->name('public.')->group(function () {
 
     Route::get('accommodations',           [AccommodationController::class, 'publicIndex'])->name('accommodations.index');
     Route::get('accommodations/{slug}',    [AccommodationController::class, 'publicShow'])->name('accommodations.show');
+
+    Route::post('journey-requests',        [JourneyController::class, 'store'])->name('journey-requests.store');
 });
 
 // ── Dashboard (auth required) ─────────────────────────────────────────────
@@ -115,5 +118,13 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/',         [AccommodationController::class, 'store'])->name('store')->middleware('permission:create-accommodation');
         Route::post('{id}',      [AccommodationController::class, 'update'])->name('update')->middleware('permission:edit-accommodation');
         Route::delete('{id}',    [AccommodationController::class, 'destroy'])->name('destroy')->middleware('permission:delete-accommodation');
+    });
+
+    // ── Journey Requests (Dashboard) ─────────────────────────────────
+    Route::prefix('journey-requests')->name('journey-requests.dashboard.')->group(function () {
+        Route::get('/',                 [JourneyController::class, 'index'])->name('index')->middleware('permission:view-journey-requests');
+        Route::get('{id}',              [JourneyController::class, 'show'])->name('show')->middleware('permission:view-journey-requests');
+        Route::patch('{id}/status',     [JourneyController::class, 'updateStatus'])->name('update-status')->middleware('permission:edit-journey-request');
+        Route::delete('{id}',           [JourneyController::class, 'destroy'])->name('destroy')->middleware('permission:delete-journey-request');
     });
 });
