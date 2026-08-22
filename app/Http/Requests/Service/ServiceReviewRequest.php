@@ -20,7 +20,11 @@ class ServiceReviewRequest extends FormRequest
     public function rules(): array
     {
         if ($this->routeIs('public.reviews.all')) {
-            return [];  // GET \u2014 no input to validate
+            return [
+                'per_page'     => ['nullable', 'integer', 'min:1', 'max:100'],
+                'website_page' => ['nullable', 'integer', 'min:1'],
+                'admin_page'   => ['nullable', 'integer', 'min:1'],
+            ];
         }
 
         if ($this->routeIs('*.reviews.index')) {
@@ -44,6 +48,11 @@ class ServiceReviewRequest extends FormRequest
             'rating'            => ['required', 'integer', 'min:1', 'max:5'],
             'content'           => ['required', 'string', 'max:2000'],
         ];
+
+        // Flat public route: service_id is optional (generic review when omitted)
+        if ($this->routeIs('public.reviews.store')) {
+            $rules['service_id'] = ['nullable', 'integer', 'exists:services,id'];
+        }
 
         // Admin can upload media
         if ($this->routeIs('*.dashboard.reviews.store')) {

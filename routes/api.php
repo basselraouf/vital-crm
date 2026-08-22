@@ -34,7 +34,8 @@ Route::prefix('public')->name('public.')->group(function () {
 
     Route::get('services',           [ServiceController::class, 'publicIndex'])->name('services.index');
     Route::get('services/{slug}',    [ServiceController::class, 'showBySlug'])->name('services.show');
-    Route::post('services/{slug}/reviews', [ServiceReviewController::class, 'publicStore'])->name('services.reviews.store');
+    Route::post('services/{slug}/reviews', [ServiceReviewController::class, 'publicStore'])->name('services.reviews.store'); // kept for backward-compat
+    Route::post('reviews',                 [ServiceReviewController::class, 'publicStore'])->name('reviews.store');
     Route::get('reviews',            [ServiceReviewController::class, 'allReviews'])->name('reviews.all');
 
     Route::get('accommodations',           [AccommodationController::class, 'publicIndex'])->name('accommodations.index');

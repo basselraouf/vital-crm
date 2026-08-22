@@ -12,20 +12,33 @@ class ServiceReviewController extends Controller
 {
     // ── Public: visitor submits review ────────────────────────────────────────
 
-    /** POST /api/public/services/{slug}/reviews */
-    public function publicStore(ServiceReviewRequest $request, string $slug)
+    /** POST /api/public/reviews  (service_id optional)
+     *  POST /api/public/services/{slug}/reviews  (backward-compat, slug takes priority) */
+    public function publicStore(ServiceReviewRequest $request, string $slug = null)
     {
         try {
-            $service = Service::active()->where('slug', $slug)->firstOrFail();
+            // Resolve service — optional for generic reviews
+            $service = null;
 
-            $review = $service->reviews()->create([
+            if ($slug) {
+                // Old slug-based route: service is required
+                $service = Service::active()->where('slug', $slug)->firstOrFail();
+            } elseif ($request->filled('service_id')) {
+                // New flat route: caller may optionally pass service_id in body
+                $service = Service::active()->findOrFail($request->service_id);
+            }
+
+            $data = [
+                'service_id'        => $service?->id,   // null for generic reviews
                 'reviewer_name'     => $request->reviewer_name,
                 'reviewer_location' => $request->reviewer_location,
                 'rating'            => $request->rating,
                 'content'           => $request->content,
                 'source'            => 'website',
                 'status'            => 'pending',
-            ]);
+            ];
+
+            $review = ServiceReview::create($data);
 
             return Response::successResponse($review, 'Review submitted successfully. It will be visible after approval.', 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -153,17 +166,58 @@ class ServiceReviewController extends Controller
 
     // ── Public: all selected reviews split by source ───────────────────────────
 
-    /** GET /api/public/reviews */
-    public function allReviews()
+    /** GET /api/public/reviews
+     *  Query params:
+     *    per_page    (int, optional) — enables pagination; limit applied independently per source
+     *    website_page (int, optional, default 1) — page for website reviews
+     *    admin_page   (int, optional, default 1) — page for admin reviews */
+    public function allReviews(ServiceReviewRequest $request)
     {
         try {
-            $reviews = ServiceReview::where('status', 'selected')
+            $baseQuery = ServiceReview::where('status', 'selected');
+
+            // ── No per_page ─ return everything flat ─────────────────────────
+            if (!$request->filled('per_page')) {
+                $reviews = (clone $baseQuery)->latest()->get();
+
+                return Response::successResponse([
+                    'website' => $reviews->where('source', 'website')->values(),
+                    'admin'   => $reviews->where('source', 'admin')->values(),
+                ]);
+            }
+
+            // ── per_page present ─ paginate each source independently ─────────
+            $perPage = (int) $request->per_page;
+
+            $websitePaginator = (clone $baseQuery)
+                ->where('source', 'website')
                 ->latest()
-                ->get();
+                ->paginate($perPage, ['*'], 'website_page');
+
+            $adminPaginator = (clone $baseQuery)
+                ->where('source', 'admin')
+                ->latest()
+                ->paginate($perPage, ['*'], 'admin_page');
 
             return Response::successResponse([
-                'website' => $reviews->where('source', 'website')->values(),
-                'admin'   => $reviews->where('source', 'admin')->values(),
+                'website' => [
+                    'data' => $websitePaginator->items(),
+                    'meta' => [
+                        'current_page' => $websitePaginator->currentPage(),
+                        'last_page'    => $websitePaginator->lastPage(),
+                        'per_page'     => $websitePaginator->perPage(),
+                        'total'        => $websitePaginator->total(),
+                    ],
+                ],
+                'admin' => [
+                    'data' => $adminPaginator->items(),
+                    'meta' => [
+                        'current_page' => $adminPaginator->currentPage(),
+                        'last_page'    => $adminPaginator->lastPage(),
+                        'per_page'     => $adminPaginator->perPage(),
+                        'total'        => $adminPaginator->total(),
+                    ],
+                ],
             ]);
         } catch (\Exception $e) {
             return Response::handleException($e, 'fetch all reviews');
