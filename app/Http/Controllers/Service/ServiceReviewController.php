@@ -114,7 +114,8 @@ class ServiceReviewController extends Controller
     public function updateStatus(ServiceReviewRequest $request, int $id, int $reviewId)
     {
         try {
-            $review = ServiceReview::where('service_id', $id)->findOrFail($reviewId);
+            // Look up by review ID only — service_id may be null for generic reviews
+            $review = ServiceReview::findOrFail($reviewId);
             $review->update(['status' => $request->status]);
 
             return Response::successResponse($review, 'Review status updated successfully.');
@@ -133,7 +134,8 @@ class ServiceReviewController extends Controller
     public function destroy(int $id, int $reviewId)
     {
         try {
-            $review = ServiceReview::where('service_id', $id)->findOrFail($reviewId);
+            // Look up by review ID only — service_id may be null for generic reviews
+            $review = ServiceReview::findOrFail($reviewId);
 
             if ($review->media_path) {
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($review->media_path);
@@ -146,6 +148,25 @@ class ServiceReviewController extends Controller
             return Response::handleModelNotFoundException($e, 'Review');
         } catch (\Exception $e) {
             return Response::handleException($e, 'delete review');
+        }
+    }
+
+    // ── Public: all selected reviews split by source ───────────────────────────
+
+    /** GET /api/public/reviews */
+    public function allReviews()
+    {
+        try {
+            $reviews = ServiceReview::where('status', 'selected')
+                ->latest()
+                ->get();
+
+            return Response::successResponse([
+                'website' => $reviews->where('source', 'website')->values(),
+                'admin'   => $reviews->where('source', 'admin')->values(),
+            ]);
+        } catch (\Exception $e) {
+            return Response::handleException($e, 'fetch all reviews');
         }
     }
 }

@@ -35,7 +35,8 @@ class ServiceReview extends Model
 
     public function service()
     {
-        return $this->belongsTo(Service::class);
+        // service_id is nullable — generic reviews are not tied to a specific service
+        return $this->belongsTo(Service::class)->withDefault();
     }
 
     // ── Scopes ────────────────────────────────────────────────────────────────

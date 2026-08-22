@@ -19,6 +19,10 @@ class ServiceReviewRequest extends FormRequest
      */
     public function rules(): array
     {
+        if ($this->routeIs('public.reviews.all')) {
+            return [];  // GET \u2014 no input to validate
+        }
+
         if ($this->routeIs('*.reviews.index')) {
             return [
                 'status'   => ['nullable', 'string', 'in:pending,rejected,selected,drafted'],
